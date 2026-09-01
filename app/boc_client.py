@@ -14,7 +14,9 @@ SERIES_MAP = {
 url = "https://www.bankofcanada.ca/valet/observations"
 data_format = "csv"
 
-def fetch_benchmark_yields(start_date, end_date):
+def fetch_benchmark_yields(start_date: pd.Timestamp, end_date: pd.Timestamp):
+    start_date = start_date.strftime("%Y-%m-%d")
+    end_date = end_date.strftime("%Y-%m-%d")
     params = {
     "start_date": start_date,
     "end_date": end_date
@@ -28,12 +30,13 @@ def fetch_benchmark_yields(start_date, end_date):
 
 def extract_yield_dataframe(response):
     lines = response.text.splitlines()
-    obs_index = lines.index('"OBSERVATIONS"')
+    obs_index = None
+    for i, line in enumerate(lines):
+        if "OBSERVATIONS" in line:
+            obs_index = i
+            break
     data_lines = lines[obs_index + 1:]
     df = pd.read_csv(io.StringIO("\n".join(data_lines)))
+    df["date"] = pd.to_datetime(df["date"])
     return df
-
-response = fetch_benchmark_yields("2023-01-01", "2023-12-31")
-df = extract_yield_dataframe(response)
-print(df.head())
 
