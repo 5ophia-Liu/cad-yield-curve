@@ -1,37 +1,20 @@
 import QuantLib as ql
 import pandas as pd
+from app.boc_client import SERIES_MAP
 
-# test input data
-calendar = ql.Canada() # Canadian calendar for business day adjustments
-daycount_convention = ql.Actual365Fixed() # daycount convention for accrual
-start_date = ql.Date(3, 1, 2023) # sample
-yields = {2: 4.28, 3: 4.31, 5: 4.30, 7: 4.20, 10: 3.35, 30: 3.14}  # sample
-year_range = 30
-SERIES_MAP = {
-        "BD.CDN.2YR.DQ.YLD": 2,
-        "BD.CDN.3YR.DQ.YLD": 3,
-        "BD.CDN.5YR.DQ.YLD": 5,
-        "BD.CDN.7YR.DQ.YLD": 7,
-        "BD.CDN.10YR.DQ.YLD": 10,
-        "BD.CDN.LONG.DQ.YLD": 30,
-        }
+SERIES_MAP_INV = {k: v for v, k in SERIES_MAP.items()}
 
-#construct ql object curve given yields, start_date, calendar, daycount_convention
+#construct single ql object curve given yields, start_date, calendar, daycount_convention
 def build_curve(yields: dict, start_date: pd.Timestamp, calendar, daycount_convention):
-    # print(f'Building yield curve from in "{calendar}" using discount convention \
-    # "{daycount_convention}" from "{start_date}" with yields: "{yields}')
-    
     # starting day, month, year ql conversion
     ql_start_date = ql.Date(start_date.day, start_date.month, start_date.year)
     ql.Settings.instance().evaluationDate = ql_start_date # set as evaluate from date   
 
     bond_helpers = []
-
     for maturity, yield_percent in yields.items():
-        year_key = SERIES_MAP.get(maturity);
+        year_key = SERIES_MAP_INV.get(maturity);
         # business day adjustment
         end_date = calendar.advance(ql_start_date, ql.Period(year_key, ql.Years))
-        print
         # coupon schedule
         schedule = ql.Schedule(
             ql_start_date,
@@ -49,7 +32,6 @@ def build_curve(yields: dict, start_date: pd.Timestamp, calendar, daycount_conve
         coupon_rate = yield_percent / 100 # make observed yield rate coupon rate
         clean_price = ql.QuoteHandle(ql.SimpleQuote(100.0))
         face_value = 100.0 # set face = clean price to 100 so yield will equal coupon rate
-
         # data on bond for given end_date and yield
         helper = ql.FixedRateBondHelper(
             clean_price,
@@ -63,16 +45,21 @@ def build_curve(yields: dict, start_date: pd.Timestamp, calendar, daycount_conve
 
     # use helpers to produce a discount curve
     curve = ql.PiecewiseLogCubicDiscount(ql_start_date, bond_helpers, daycount_convention)
-    curve.enableExtrapolation()
-    # return a dictionary of the curve data for each year
+    curve.enableExtrapolation() # return curve object with spot rates for any date
     return curve
 
-# helper to convert df to dict by year
-def curve_to_dict(curve: dict, calendar, start_date: pd.Timestamp, daycount_convention, year_range: int = 30):
+# generate list of maturities from 0 to year_range
+def make_maturities_list(year_range: int = 30) -> list:
+    maturities = list(range(0, year_range + 1))
+    return maturities
+
+# helper to convert curve object to list for each year in range 0 to year_range
+def curve_to_list(curve, calendar, start_date: pd.Timestamp, daycount_convention, year_range: int = 30) -> list:
     ql_start_date = ql.Date(start_date.day, start_date.month, start_date.year)
-    curve_data = {}
-    for year in list(range(1, year_range + 1)):
+    maturities = make_maturities_list(year_range)
+    curve_data = []
+    for year in maturities:
         date = calendar.advance(ql_start_date, ql.Period(year, ql.Years))
         spot_rate = curve.zeroRate(date, daycount_convention, ql.Compounded, ql.Semiannual).rate()
-        curve_data[year] = round(spot_rate * 100, 4)
+        curve_data.append(round(spot_rate * 100, 4))
     return curve_data

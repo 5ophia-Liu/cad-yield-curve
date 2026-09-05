@@ -14,6 +14,7 @@ SERIES_MAP = {
 url = "https://www.bankofcanada.ca/valet/observations"
 data_format = "csv"
 
+# get BOC data from specified start_date to end_date as csv object
 def fetch_benchmark_yields(start_date: pd.Timestamp, end_date: pd.Timestamp):
     start_date = start_date.strftime("%Y-%m-%d")
     end_date = end_date.strftime("%Y-%m-%d")
@@ -28,6 +29,7 @@ def fetch_benchmark_yields(start_date: pd.Timestamp, end_date: pd.Timestamp):
     )
     return response
 
+# extract yield data from BOC response and return as pandas dataframe
 def extract_yield_dataframe(response):
     lines = response.text.splitlines()
     obs_index = None
