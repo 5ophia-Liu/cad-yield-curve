@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+source/
+venv/
+env/
+.env
+.env.*
+.DS_Store
