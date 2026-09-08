@@ -39,14 +39,6 @@ def get_data(start_date: str, end_date: str):
         traceback.print_exc()
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.get("/yields")
-def run(get_data, start_date: str, end_date: str):
-    try:
-        get_data(start_date, end_date)
-        return {"status": "ok", "message": f"yields from start date+2: {start_date}, to end date: {end_date} extracted."}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
 @app.get("/curve")
 def run(start_date: str, end_date: str):
     yield_df = get_data(start_date, end_date)
