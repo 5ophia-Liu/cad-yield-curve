@@ -2,12 +2,15 @@
 
 This project generates a 3D visualisation of the Canadian government bond yield curve (ex. Jan-Dec 2025). Based on historical benchmark yields from the BOC.
 
+## Demo
+
+https://github.com/user-attachments/assets/8e7afe83-0007-490b-b575-5cabdb8f13b2
+
 ## Details
 
 - **Backend** (FastAPI + QuantLib): fetches Government of Canada benchmark bond yields (2Y, 3Y, 5Y, 7Y, 10Y, 30Y) from the Bank of Canada's Valet API, then bootstraps a curve using PiecewiseLogCubicDiscount to derive zero rates across the full 0–30Y range.
 - **Frontend** (React + React Three Fibre + Three.js) fetches curve data and render it as a 3D mesh (date x yield x maturity). Yield level is shown by colour (blue < red).
 
-https://github.com/user-attachments/assets/8e7afe83-0007-490b-b575-5cabdb8f13b2
 
 ## Run Instructions
 
